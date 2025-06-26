@@ -2,6 +2,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.awt.Color;
 
 /**
@@ -87,12 +89,17 @@ public class Clustering {
         }
 
         clusters.clear();
+        Map<Integer, Integer> map = new HashMap<>();
+        int idx = 0;
         for (int v = 0; v < G.V(); v++) {
             int root = uf.find(v);
-            while (clusters.size() <= root) {
+            Integer pos = map.get(root);
+            if (pos == null) {
+                pos = idx++;
+                map.put(root, pos);
                 clusters.add(new LinkedList<Integer>());
             }
-            clusters.get(root).add(v);
+            clusters.get(pos).add(v);
         }
         }
 	
@@ -124,12 +131,17 @@ public class Clustering {
         }
 
         clusters.clear();
+        Map<Integer, Integer> map = new HashMap<>();
+        int idx = 0;
         for (int v = 0; v < G.V(); v++) {
             int root = uf.find(v);
-            while (clusters.size() <= root) {
+            Integer pos = map.get(root);
+            if (pos == null) {
+                pos = idx++;
+                map.put(root, pos);
                 clusters.add(new LinkedList<Integer>());
             }
-            clusters.get(root).add(v);
+            clusters.get(pos).add(v);
         }
         }
 	

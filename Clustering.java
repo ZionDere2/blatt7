@@ -2,6 +2,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.awt.Color;
 
 /**
@@ -44,8 +46,7 @@ public class Clustering {
                     	labels.add(label);
                     	List <Integer> l= new LinkedList <Integer>();
                     	labeled.add(l);
-                    	labeled.get(labels.indexOf(label)).add(v);
-                    	System.out.println(label);
+                        labeled.get(labels.indexOf(label)).add(v);
                     }                
             }
              
@@ -73,9 +74,34 @@ public class Clustering {
 	 * partition into several connected components, which are the clusters.
 	 * @param numberOfClusters number of expected clusters
 	 */
-	public void findClusters(int numberOfClusters){
-		// TODO
-	}
+        public void findClusters(int numberOfClusters){
+        PrimMST mst = new PrimMST(G);
+        List<Edge> edges = new LinkedList<Edge>();
+        for (Edge e : mst.edges()) {
+            edges.add(e);
+        }
+        Collections.sort(edges, Collections.reverseOrder());
+
+        UF uf = new UF(G.V());
+        for (int i = numberOfClusters - 1; i < edges.size(); i++) {
+            Edge e = edges.get(i);
+            uf.union(e.either(), e.other(e.either()));
+        }
+
+        clusters.clear();
+        Map<Integer, Integer> map = new HashMap<>();
+        int idx = 0;
+        for (int v = 0; v < G.V(); v++) {
+            int root = uf.find(v);
+            Integer pos = map.get(root);
+            if (pos == null) {
+                pos = idx++;
+                map.put(root, pos);
+                clusters.add(new LinkedList<Integer>());
+            }
+            clusters.get(pos).add(v);
+        }
+        }
 	
 	/**
 	 * This method finds clusters based on a MST and a threshold for the coefficient of variation.
@@ -86,17 +112,65 @@ public class Clustering {
 	 *
 	 * @param threshold for the coefficient of variation
 	 */
-	public void findClusters(double threshold){
-		// TODO
-	}
+        public void findClusters(double threshold){
+        PrimMST mst = new PrimMST(G);
+        List<Edge> edges = new LinkedList<Edge>();
+        for (Edge e : mst.edges()) {
+            edges.add(e);
+        }
+        Collections.sort(edges, Collections.reverseOrder());
+
+        List<Edge> working = new LinkedList<Edge>(edges);
+        while (working.size() > 0 && coefficientOfVariation(working) > threshold) {
+            working.remove(0); // remove largest
+        }
+
+        UF uf = new UF(G.V());
+        for (Edge e : working) {
+            uf.union(e.either(), e.other(e.either()));
+        }
+
+        clusters.clear();
+        Map<Integer, Integer> map = new HashMap<>();
+        int idx = 0;
+        for (int v = 0; v < G.V(); v++) {
+            int root = uf.find(v);
+            Integer pos = map.get(root);
+            if (pos == null) {
+                pos = idx++;
+                map.put(root, pos);
+                clusters.add(new LinkedList<Integer>());
+            }
+            clusters.get(pos).add(v);
+        }
+        }
 	
 	/**
 	 * Evaluates the clustering based on a fixed number of clusters.
 	 * @return array of the number of the correctly classified data points per cluster
 	 */
-	public int[] validation() {
-		// TODO
-	}
+        public int[] validation() {
+        if (labeled == null || labeled.isEmpty()) {
+            return new int[0];
+        }
+        int[] result = new int[clusters.size()];
+        for (int i = 0; i < clusters.size(); i++) {
+            int[] counts = new int[labeled.size()];
+            for (int v : clusters.get(i)) {
+                for (int l = 0; l < labeled.size(); l++) {
+                    if (labeled.get(l).contains(v)) {
+                        counts[l]++;
+                    }
+                }
+            }
+            int max = 0;
+            for (int c : counts) {
+                if (c > max) max = c;
+            }
+            result[i] = max;
+        }
+        return result;
+        }
 	
 	/**
 	 * Calculates the coefficient of variation.
@@ -104,9 +178,22 @@ public class Clustering {
 	 * @param part list of edges
 	 * @return coefficient of variation
 	 */
-	public double coefficientOfVariation(List <Edge> part) {
-		// TODO
-	}
+        public double coefficientOfVariation(List <Edge> part) {
+        if (part == null || part.isEmpty()) return 0.0;
+        double sum = 0.0;
+        for (Edge e : part) {
+            sum += e.weight();
+        }
+        double mean = sum / part.size();
+        double var = 0.0;
+        for (Edge e : part) {
+            double diff = e.weight() - mean;
+            var += diff * diff;
+        }
+        var /= part.size();
+        double sd = Math.sqrt(var);
+        return sd / mean;
+        }
 	
 	/**
 	 * Plots clusters in a two-dimensional space.
@@ -134,7 +221,17 @@ public class Clustering {
 	
 
     public static void main(String[] args) {
-		// FOR TESTING
+        if (args.length < 2) {
+            System.err.println("Usage: java Clustering <inputfile> <number_of_clusters>");
+            return;
+        }
+
+        In in = new In(args[0]);
+        int k = Integer.parseInt(args[1]);
+        Clustering c = new Clustering(in);
+        c.findClusters(k);
+        int[] eval = c.validation();
+        System.out.println(Arrays.toString(eval));
     }
 }
 

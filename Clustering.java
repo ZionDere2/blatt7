@@ -29,24 +29,23 @@ public class Clustering {
             int V = in.readInt();
             int dim= in.readInt();
             G= new EdgeWeightedGraph(V);
-            labeled=new LinkedList <List<Integer>>();
-            LinkedList labels= new LinkedList();
+            labeled=new LinkedList<List<Integer>>();
+            List<String> labels = new LinkedList<String>();
             double[][] coord = new double [V][dim];
             for (int v = 0;v<V; v++ ) {
                 for(int j=0; j<dim; j++) {
                 	coord[v][j]=in.readDouble();
                 }
                 String label= in.readString();
-                    if(labels.contains(label)) {
-                    	labeled.get(labels.indexOf(label)).add(v);
-                    }
-                    else {
-                    	labels.add(label);
-                    	List <Integer> l= new LinkedList <Integer>();
-                    	labeled.add(l);
-                    	labeled.get(labels.indexOf(label)).add(v);
-                    	System.out.println(label);
-                    }                
+                int idx = labels.indexOf(label);
+                if(idx != -1) {
+                        labeled.get(idx).add(v);
+                } else {
+                        labels.add(label);
+                        List<Integer> l= new LinkedList<Integer>();
+                        l.add(v);
+                        labeled.add(l);
+                }
             }
              
             G.setCoordinates(coord);

@@ -96,11 +96,11 @@ public class EdgeWeightedGraph {
      * @return the coordinates of the nodes in the graph
      */
     public double[][] getCoordinates(){
-		// TODO
+        return coord;
     }
-    
+
     public void setCoordinates(double [][]coord) {
-		// TODO
+        this.coord = coord;
     }
 
     /**
@@ -235,8 +235,10 @@ public class EdgeWeightedGraph {
 
 
     public static void main(String[] args) {
-		// TODO
-
+        if (args.length < 1) return;
+        In in = new In(args[0]);
+        EdgeWeightedGraph G = new EdgeWeightedGraph(in);
+        System.out.println(G);
     }
 
 }

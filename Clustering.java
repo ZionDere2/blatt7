@@ -29,24 +29,23 @@ public class Clustering {
             int V = in.readInt();
             int dim= in.readInt();
             G= new EdgeWeightedGraph(V);
-            labeled=new LinkedList <List<Integer>>();
-            LinkedList labels= new LinkedList();
+            labeled=new LinkedList<List<Integer>>();
+            List<String> labels = new LinkedList<String>();
             double[][] coord = new double [V][dim];
             for (int v = 0;v<V; v++ ) {
                 for(int j=0; j<dim; j++) {
                 	coord[v][j]=in.readDouble();
                 }
                 String label= in.readString();
-                    if(labels.contains(label)) {
-                    	labeled.get(labels.indexOf(label)).add(v);
-                    }
-                    else {
-                    	labels.add(label);
-                    	List <Integer> l= new LinkedList <Integer>();
-                    	labeled.add(l);
-                    	labeled.get(labels.indexOf(label)).add(v);
-                    	System.out.println(label);
-                    }                
+                int idx = labels.indexOf(label);
+                if(idx != -1) {
+                        labeled.get(idx).add(v);
+                } else {
+                        labels.add(label);
+                        List<Integer> l= new LinkedList<Integer>();
+                        l.add(v);
+                        labeled.add(l);
+                }
             }
              
             G.setCoordinates(coord);
@@ -73,9 +72,24 @@ public class Clustering {
 	 * partition into several connected components, which are the clusters.
 	 * @param numberOfClusters number of expected clusters
 	 */
-	public void findClusters(int numberOfClusters){
-		// TODO
-	}
+        public void findClusters(int numberOfClusters){
+            PrimMST mst = new PrimMST(G);
+            List<Edge> edges = new LinkedList<Edge>();
+            for (Edge e : mst.edges()) {
+                edges.add(e);
+            }
+            Collections.sort(edges); // ascending by weight
+
+            UF uf = new UF(G.V());
+            int edgesToKeep = edges.size() - (numberOfClusters - 1);
+            for (int i = 0; i < edgesToKeep; i++) {
+                Edge e = edges.get(i);
+                int v = e.either();
+                int w = e.other(v);
+                uf.union(v, w);
+            }
+            clusters = connectedComponents(uf);
+        }
 	
 	/**
 	 * This method finds clusters based on a MST and a threshold for the coefficient of variation.
@@ -86,17 +100,54 @@ public class Clustering {
 	 *
 	 * @param threshold for the coefficient of variation
 	 */
-	public void findClusters(double threshold){
-		// TODO
-	}
+        public void findClusters(double threshold){
+            PrimMST mst = new PrimMST(G);
+            List<Edge> sorted = new LinkedList<Edge>();
+            for (Edge e : mst.edges()) {
+                sorted.add(e);
+            }
+            Collections.sort(sorted);
+
+            List<Edge> solution = new LinkedList<Edge>();
+            for (Edge e : sorted) {
+                solution.add(e);
+                if (coefficientOfVariation(solution) > threshold) {
+                    solution.remove(solution.size() - 1);
+                }
+            }
+
+            UF uf = new UF(G.V());
+            for (Edge e : solution) {
+                int v = e.either();
+                int w = e.other(v);
+                uf.union(v, w);
+            }
+            clusters = connectedComponents(uf);
+        }
 	
 	/**
 	 * Evaluates the clustering based on a fixed number of clusters.
 	 * @return array of the number of the correctly classified data points per cluster
 	 */
-	public int[] validation() {
-		// TODO
-	}
+        public int[] validation() {
+            if (labeled == null || clusters == null) return new int[0];
+            // sort clusters and labeled lists for consistent order
+            Collections.sort(clusters, (a,b) -> Integer.compare(a.get(0), b.get(0)));
+            Collections.sort(labeled, (a,b) -> Integer.compare(a.get(0), b.get(0)));
+
+            int n = Math.min(clusters.size(), labeled.size());
+            int[] result = new int[n];
+            for (int i = 0; i < n; i++) {
+                List<Integer> cl = clusters.get(i);
+                List<Integer> lab = labeled.get(i);
+                int count = 0;
+                for (int v : cl) {
+                    if (lab.contains(v)) count++;
+                }
+                result[i] = count;
+            }
+            return result;
+        }
 	
 	/**
 	 * Calculates the coefficient of variation.
@@ -104,9 +155,42 @@ public class Clustering {
 	 * @param part list of edges
 	 * @return coefficient of variation
 	 */
-	public double coefficientOfVariation(List <Edge> part) {
-		// TODO
-	}
+        public double coefficientOfVariation(List <Edge> part) {
+            if (part == null || part.size() <= 1) return 0.0;
+            double sum = 0.0;
+            double sq = 0.0;
+            for (Edge e : part) {
+                double w = e.weight();
+                sum += w;
+                sq += w * w;
+            }
+            double mean = sum / part.size();
+            double variance = sq / part.size() - mean * mean;
+            if (variance < 0) variance = 0; // numerical safety
+            double sd = Math.sqrt(variance);
+            return sd / mean;
+        }
+
+    // helper method to compute connected components using UF structure
+    private List<List<Integer>> connectedComponents(UF uf) {
+        java.util.Map<Integer, List<Integer>> map = new java.util.HashMap<>();
+        for (int v = 0; v < G.V(); v++) {
+            int root = uf.find(v);
+            List<Integer> l = map.get(root);
+            if (l == null) {
+                l = new LinkedList<Integer>();
+                map.put(root, l);
+            }
+            l.add(v);
+        }
+        List<List<Integer>> comps = new LinkedList<List<Integer>>();
+        for (List<Integer> l : map.values()) {
+            Collections.sort(l);
+            comps.add(l);
+        }
+        Collections.sort(comps, (a,b) -> Integer.compare(a.get(0), b.get(0)));
+        return comps;
+    }
 	
 	/**
 	 * Plots clusters in a two-dimensional space.

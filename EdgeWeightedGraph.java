@@ -18,7 +18,7 @@ import java.util.Stack;
  *  adjacency list of <em>v</em> twice and contributes two to the degree
  *  of <em>v</em>.
  *  <p>
- *  This implementation uses an adjacency-lists representation, which 
+ *  This implementation uses an adjacency-lists representation, which
  *  is a vertex-indexed array of {@link Bag} objects.
  *  All operations take constant time (in the worst case) except
  *  iterating over the edges incident to a given vertex, which takes
@@ -33,11 +33,11 @@ import java.util.Stack;
  */
 public class EdgeWeightedGraph {
     private static final String NEWLINE = System.getProperty("line.separator");
-    private double[][] coord; //saves the coordinates of your nodes/ data points. 
+    private double[][] coord; //saves the coordinates of your nodes/ data points.
     private final int V;
     private int E;
     private Bag<Edge>[] adj;
-    
+
     /**
      * Initializes an empty edge-weighted graph with {@code V} vertices and 0 edges.
      *
@@ -53,7 +53,7 @@ public class EdgeWeightedGraph {
             adj[v] = new Bag<Edge>();
         }
     }
-    
+
     /**
      * Initializes an empty edge-weighted graph from an input file
      *
@@ -71,36 +71,36 @@ public class EdgeWeightedGraph {
             int w = in.readInt();
             validateVertex(v);
             validateVertex(w);
-	    double weight=0;
-	    double[] coordv = new double[dim];
-	    double[] coordw = new double[dim];
-	
-	    for(int j=0; j<dim; j++) {
-		coordv[j]=in.readDouble();
-		coord[v][j]=coordv[j];
-	    }
-	    for(int j=0; j<dim; j++) {
-		coordw[j]=in.readDouble();
-		coord[w][j]=coordw[j];
-	    }
-	    for(int j=0; j<dim; j++) {
-		weight= weight+Math.pow(coordv[j]-coordw[j],2);
-	    }
-	    weight=Math.sqrt(weight);
-	    Edge e = new Edge(v, w, weight);
-	    addEdge(e);
+            double weight=0;
+            double[] coordv = new double[dim];
+            double[] coordw = new double[dim];
+
+            for(int j=0; j<dim; j++) {
+                coordv[j]=in.readDouble();
+                coord[v][j]=coordv[j];
+            }
+            for(int j=0; j<dim; j++) {
+                coordw[j]=in.readDouble();
+                coord[w][j]=coordw[j];
+            }
+            for(int j=0; j<dim; j++) {
+                weight= weight+Math.pow(coordv[j]-coordw[j],2);
+            }
+            weight=Math.sqrt(weight);
+            Edge e = new Edge(v, w, weight);
+            addEdge(e);
         }
     }
-    
+
     /**
      * @return the coordinates of the nodes in the graph
      */
     public double[][] getCoordinates(){
-		// TODO
+        return coord;
     }
-    
+
     public void setCoordinates(double [][]coord) {
-		// TODO
+        this.coord = coord;
     }
 
     /**
@@ -180,7 +180,7 @@ public class EdgeWeightedGraph {
      * Returns the degree of vertex {@code v}.
      *
      * @param  v the vertex
-     * @return the degree of vertex {@code v}               
+     * @return the degree of vertex {@code v}
      * @throws IllegalArgumentException unless {@code 0 <= v < V}
      */
     public int degree(int v) {
@@ -235,9 +235,13 @@ public class EdgeWeightedGraph {
 
 
     public static void main(String[] args) {
-		// TODO
-
+        if (args.length < 1) {
+            System.err.println("Usage: java EdgeWeightedGraph <inputfile>");
+            return;
+        }
+        In in = new In(args[0]);
+        EdgeWeightedGraph G = new EdgeWeightedGraph(in);
+        System.out.println(G);
     }
 
 }
-
